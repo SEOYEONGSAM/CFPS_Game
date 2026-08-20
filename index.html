@@ -73,8 +73,8 @@
 </head>
 <body>
 <div class="wrap">
-  <h1>CFPS LOCATOR TRAINER <span class="trap-badge">TRAP CARDS UPDATED</span></h1>
-  <div class="tagline">키워드 → Section/Chapter 위치찾기 · 헷갈린 함정카드 강화 · 오답 재도전</div>
+  <h1>CFPS LOCATOR TRAINER <span class="trap-badge">CONTEXT MODE</span></h1>
+  <div class="tagline">문맥 → Section 위치찾기 · Chapter는 참고 · 헷갈리는 단어는 조합으로 훈련</div>
 
   <div id="home">
     <div class="cluster-list" id="clusterList"></div>
@@ -88,6 +88,17 @@
     <label style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--sub);margin:12px 0 6px">
       <input type="checkbox" id="shuffleClusterChk" checked> 클러스터 순서도 랜덤으로
     </label>
+
+    <div style="display:flex;align-items:center;gap:10px;margin:8px 0 12px;font-size:11px;color:var(--sub);flex-wrap:wrap">
+      <span>생각 시간</span>
+      <select id="timerSelect" style="background:#242830;color:#eee;border:1px solid #3a3d44;border-radius:6px;padding:6px 8px">
+        <option value="15000" selected>15초 · 추천</option>
+        <option value="10000">10초 · 익숙해진 뒤</option>
+        <option value="5000">5초 · 반사훈련</option>
+        <option value="0">제한 없음</option>
+      </select>
+      <span style="color:var(--dim)">시간 초과여도 오답 처리 안 됨</span>
+    </div>
 
     <button class="btn-ghost" id="addCardToggle" style="margin-bottom:10px">+ 카드 추가 / 관리</button>
     <div id="addCardPanel" class="hidden" style="margin-bottom:14px">
@@ -110,6 +121,7 @@
 
   <div id="session" class="hidden">
     <div class="session-head">
+      <button class="btn-ghost" id="homeBtn" style="padding:5px 8px">← 홈</button>
       <span class="phase-tag" id="phaseTag">FLASHCARD</span>
       <span class="progress" id="progressTxt"></span>
     </div>
@@ -133,7 +145,10 @@
     <div class="cluster-done">
       <div class="big" id="cdTitle"></div>
       <div class="stat" id="cdStat"></div>
-      <button class="btn-main" id="cdNextBtn">다음 클러스터</button>
+      <div class="btnrow">
+        <button class="btn-ghost" id="cdHomeBtn">← 홈으로</button>
+        <button class="btn-main" id="cdNextBtn" style="flex:1">다음 클러스터</button>
+      </div>
     </div>
   </div>
 
@@ -207,7 +222,8 @@ const BASE_CARDS = [
   {s:9,c:'C1',cl:3,def:'특정 산업공정/시설의 화재위험',kw:['wood','sanding']},
   {s:9,c:'C2',cl:3,def:'특정 산업공정/시설의 화재위험',kw:['spray finish','powder coating']},
   {s:9,c:'C3',cl:3,def:'특정 산업공정/시설의 화재위험',kw:['dip tank','curtain coater','roll coater']},
-  {s:9,c:'C4',cl:3,def:'특정 산업공정/시설의 화재위험',kw:['plastic','extrusion']},
+  {s:9,c:'C4',cl:3,def:'함정: PLASTIC + 제조공정/압출 → 산업공정',kw:['plastic processing','extrusion','manufacturing process']},
+  {s:6,c:'C14',cl:3,def:'함정: PLASTIC + 재료의 연소/화재특성 → Materials',kw:['plastic combustion','flammability','heat release','polymer fire properties']},
   {s:9,c:'C8',cl:3,def:'특정 산업공정/시설의 화재위험',kw:['records storage']},
   {s:9,c:'C11',cl:3,def:'특정 산업공정/시설의 화재위험',kw:['wastewater']},
   {s:9,c:'C12',cl:3,def:'특정 산업공정/시설의 화재위험',kw:['laboratories']},
@@ -226,7 +242,7 @@ const BASE_CARDS = [
   // cluster5
   {s:12,c:'C1',cl:5,def:'소방조직의 평상시 운영',kw:['ISO','FSRS']},
   {s:12,c:'C4',cl:5,def:'소방조직의 평상시 운영',kw:['agency']},
-  {s:12,c:'C9',cl:5,def:'소방조직의 평상시 운영',kw:['PPE','DOT','SCBA','PASS']},
+  {s:12,c:'C9',cl:5,def:'PPE + 장비/SCBA/PASS 규정·운영 문맥',kw:['PPE equipment','SCBA','PASS','DOT']},
   {s:12,c:'C10',cl:5,def:'소방조직의 평상시 운영',kw:['building code','building construction classification']},
   {s:12,c:'C11',cl:5,def:'소방조직의 평상시 운영',kw:['federal requirement','career department','volunteer department']},
   {s:12,c:'C12',cl:5,def:'소방조직의 평상시 운영',kw:['station','red/yellow/green zone']},
@@ -236,7 +252,7 @@ const BASE_CARDS = [
   {s:13,c:'C3',cl:5,def:'소방대의 실제 현장 대응',kw:['medical service','system performance','benchmarking','standard','tiered response']},
   {s:13,c:'C4',cl:5,def:'소방대의 실제 현장 대응',kw:['vehicle design','apparatus']},
   {s:13,c:'C5',cl:5,def:'소방대의 실제 현장 대응',kw:['fire streams','static','fire pump 50%, 70%','fire department pumpers','fire pump + apparatus']},
-  {s:13,c:'C8',cl:5,def:'소방대의 실제 현장 대응',kw:['PPE','9 hazards']},
+  {s:13,c:'C8',cl:5,def:'PPE + 실제 incident hazard/현장 대응 문맥',kw:['PPE at incident','9 hazards','operational hazards']},
   {s:13,c:'C9-11',cl:5,def:'소방대의 실제 현장 대응',kw:['aircraft','wild land','shooter']},
 
   // cluster6
@@ -253,7 +269,7 @@ const BASE_CARDS = [
   {s:14,c:'C10',cl:6,def:'함정: gas라는 단어만 보고 S6로 가지 말기',kw:['fuel gas','natural gas + LP gas','propane','butane','common fuel gases']},
 
   // cluster7
-  {s:15,c:'C1',cl:7,def:'소화용 물의 공급',kw:['suction tank','water storage tank','steel fiberglass plastic','protection from freezing']},
+  {s:15,c:'C1',cl:7,def:'함정: STORAGE라도 fire-water tank/급수 저장이면 S15',kw:['water storage tank','suction tank','fire water supply','protection from freezing']},
   {s:15,c:'C2',cl:7,def:'소화용 물의 공급',kw:['fire flow rate','AWWA','ISO method','ISU method','public supply']},
   {s:15,c:'C3',cl:7,def:'소화용 물의 공급',kw:['water density','viscosity','water energy','sprinkler K-factor','pitot tube','Venturi tube','Hazen-Williams C','water hammer']},
   {s:15,c:'C4',cl:7,def:'소화용 물의 공급',kw:['pipe schedule sprinkler water supply','ordinary hazard','light hazard']},
@@ -318,6 +334,7 @@ function refreshCards(){CARDS=[...BASE_CARDS,...CUSTOM_CARDS]}
 
 let selectedClusters=[],sessionQueue=[],qIndex=0,clusterOrder=[],clusterIdx=0,currentClusterCards=[];
 let currentEntry=null,cardState={},timerStart=0,timerRAF=null,currentElapsed=0,clusterStats={},allWeak=[],allSlow=[];
+let TIMER_DURATION=15000;
 
 function keyOf(card){return `${card.s}-${card.c}-${card.kw.join('~')}`}
 function shuffle(arr){
@@ -372,6 +389,7 @@ document.getElementById('clearAddedBtn').onclick=()=>{
 
 document.getElementById('startBtn').onclick=startSession;
 function startSession(){
+  TIMER_DURATION=parseInt(document.getElementById('timerSelect').value,10);
   selectedClusters=[];
   document.querySelectorAll('.cluster-row').forEach(r=>{if(!r.classList.contains('off'))selectedClusters.push(parseInt(r.dataset.id))});
   if(!selectedClusters.length){alert('클러스터를 하나 이상 선택해줘');return}
@@ -415,22 +433,35 @@ function showCard(entry){
   document.getElementById('progressTxt').textContent=`S그룹 ${clusterOrder[clusterIdx]} · ${qIndex}/${sessionQueue.length}`;
   const kwToShow=phase==='FLASHCARD'?card.kw.slice(0,Math.max(1,Math.ceil(card.kw.length/2))):card.kw;
   document.getElementById('clueTxt').innerHTML=kwToShow.map(x=>escapeHtml(x)).join(' <b>+</b> ');
-  document.getElementById('ansLoc').textContent=`S${card.s} — ${card.c}`;
-  document.getElementById('ansDef').textContent=card.def;
+  document.getElementById('ansLoc').textContent=`정답 Section: S${card.s}`;
+  document.getElementById('ansDef').textContent=`참고 Chapter: ${card.c} · ${card.def}`;
   document.getElementById('ansKw').textContent=card.kw.join(' · ');
   document.getElementById('cardBox').className='card clr'+card.cl;
   startTimer()
 }
 function escapeHtml(s){return s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function startTimer(){
-  const fill=document.getElementById('timerFill');fill.classList.remove('over');fill.style.width='100%';
-  timerStart=performance.now();cancelAnimationFrame(timerRAF);
-  const DURATION=5000;
+  const fill=document.getElementById('timerFill');
+  fill.classList.remove('over');
+  timerStart=performance.now();
+  cancelAnimationFrame(timerRAF);
+
+  if(TIMER_DURATION===0){
+    fill.style.width='100%';
+    fill.style.opacity='.18';
+    return;
+  }
+
+  fill.style.opacity='1';
+  fill.style.width='100%';
   function tick(){
-    const elapsed=performance.now()-timerStart,pct=Math.max(0,100-(elapsed/DURATION)*100);
-    fill.style.width=pct+'%';if(elapsed>DURATION)fill.classList.add('over');
-    if(elapsed<DURATION*2.4)timerRAF=requestAnimationFrame(tick)
-  }tick()
+    const elapsed=performance.now()-timerStart;
+    const pct=Math.max(0,100-(elapsed/TIMER_DURATION)*100);
+    fill.style.width=pct+'%';
+    if(elapsed>TIMER_DURATION)fill.classList.add('over');
+    if(elapsed<TIMER_DURATION*2.4)timerRAF=requestAnimationFrame(tick);
+  }
+  tick();
 }
 document.getElementById('revealBtn').onclick=()=>{
   currentElapsed=performance.now()-timerStart;cancelAnimationFrame(timerRAF);
@@ -442,7 +473,7 @@ document.getElementById('rightBtn').onclick=()=>grade(true);
 document.getElementById('wrongBtn').onclick=()=>grade(false);
 function grade(correct){
   const st=cardState[keyOf(currentEntry.card)];
-  if(correct){st.correct++;if(currentElapsed>5000)st.slowEver=true}
+  if(correct){st.correct++;if(TIMER_DURATION>0 && currentElapsed>TIMER_DURATION)st.slowEver=true}
   else{st.correct=0;st.wrongEver=true}
   nextCard()
 }
@@ -456,10 +487,21 @@ function finishCluster(){
   document.getElementById('session').classList.add('hidden');
   document.getElementById('clusterDone').classList.remove('hidden');
   document.getElementById('cdTitle').textContent=`S그룹 ${clId} 완료`;
-  document.getElementById('cdStat').textContent=`${cleared.length}/${currentClusterCards.length} 클리어 · 취약 ${weak.length} · 5초 초과 ${slowCleared.length}`;
+  document.getElementById('cdStat').textContent=`${cleared.length}/${currentClusterCards.length} 클리어 · 취약 ${weak.length}` + (TIMER_DURATION>0 ? ` · 설정시간 초과 ${slowCleared.length}` : '');
   document.getElementById('cdNextBtn').textContent=clusterIdx===clusterOrder.length-1?'최종 결과':'다음 클러스터'
 }
 document.getElementById('cdNextBtn').onclick=()=>{clusterIdx++;runCluster()};
+
+
+function goHome(){
+  cancelAnimationFrame(timerRAF);
+  document.getElementById('session').classList.add('hidden');
+  document.getElementById('clusterDone').classList.add('hidden');
+  document.getElementById('finalSummary').classList.add('hidden');
+  document.getElementById('home').classList.remove('hidden');
+}
+document.getElementById('homeBtn').onclick=goHome;
+document.getElementById('cdHomeBtn').onclick=goHome;
 
 function showFinalSummary(){
   document.getElementById('clusterDone').classList.add('hidden');
